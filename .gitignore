@@ -232,7 +232,5 @@ TAGS
 *.rej
 
 # our data
-hand_labels/
-hand_labels_synth/
 *.jpg
 *.json
