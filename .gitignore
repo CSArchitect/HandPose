@@ -230,3 +230,9 @@ TAGS
 # Files generated when a patch is rejected
 *.orig
 *.rej
+
+# our data
+hand_labels/
+hand_labels_synth/
+*.jpg
+*.json
