@@ -7,10 +7,10 @@ import os
 import os.path
 import numpy as np
 import json
-import matplotlib
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-import mltools as ml
+#import matplotlib
+#import matplotlib.pyplot as plt
+#import matplotlib.image as mpimg
+#import mltools as ml
 from PIL import Image
 
 
@@ -78,16 +78,24 @@ class CustomDataset(torch.utils.data.Dataset):
                 
     def __getitem__(self, index):
         # 1. Read one data from file (e.g. using numpy.fromfile, PIL.Image.open).
-        img = Image.open(self.imgs[index])
-        plt.imshow(img)
-        # 2. Preprocess the data (e.g. torchvision.Transform).
-        pixels = list(img.getdata())
-        m = np.mean(pixels)
-        s = np.std(pixels)
-        img = transforms.Normalize(mean=m, std=s)
+        #img = Image.open(self.imgs[index])
+        #pixels = list(img.getdata())
+        #m = np.mean(pixels)
+        #s = np.std(pixels)
+        #normalize = transforms.Normalize(mean=m,std=s)
+        
+        #transform = transforms.Compose([transforms.ToTensor(), normalize])
+        #img1 = transform(img)
+        # plt.imshow(img)]
+        
+        pil2tensor = transforms.ToTensor()
+        #tensor2pil = transforms.ToPILImage()
+        
+        pil_image = Image.open(self.imgs[index])
+        rgb_image = pil2tensor(pil_image)
         # 3. Return a data pair (e.g. image and label).
 #         print(self.labels[index])
-        return (img, self.labels[index])
+        return (rgb_image, self.labels[index])
     def __len__(self):
         # You should change 0 to the total size of your dataset.
         return len(self.imgs)
