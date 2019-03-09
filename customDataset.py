@@ -5,7 +5,7 @@ import torchvision.transforms as transforms
 import torchvision.transforms.functional as TF
 
 import os
-import os.path
+import os.path as osp
 import numpy as np
 import json
 #import matplotlib
@@ -14,6 +14,13 @@ import json
 #import mltools as ml
 from PIL import Image
 
+import pandas as pd
+import gc
+
+import warnings
+warnings.filterwarnings('ignore')
+
+import glob
 
 # ================================================================== #
 #                  Input pipeline for custom dataset                 #
@@ -21,14 +28,17 @@ from PIL import Image
 
 img_size = 368, 368
 lbl_size = 21, 3
-
+#path = 'test_batch_synth2/'
+    
+    
 # You should build your custom dataset as below.
 class CustomDataset(torch.utils.data.Dataset):
+    
     def __init__(self):
         # TODO
         # Initialize file paths 
-        self.paths = ['hand_labels_synth/synth2/', 'hand_labels_synth/synth3/']
-        
+        #self.paths = ['hand_labels_synth/synth2/', 'hand_labels_synth/synth3/']
+        self.paths = ['test_batch_synth2/', 'test_batch_synth3/']
         # Initialize a list of file names. 
         self.imgs = np.chararray(5591, itemsize=37)
         
@@ -53,31 +63,34 @@ class CustomDataset(torch.utils.data.Dataset):
         # Used to pick up where synth2 left off before all
         # 5591 images
         cutoff = 0
-        for i,f in enumerate(sorted(os.listdir(inpath2))):
+        imgFiles = []
+        imgFiles = glob.glob(osp.join(self.paths[0], '*.jpg'))
+        for i,f in enumerate(imgFiles):
             # Since every iteration can be a .jpg or a .json
             # index to add to is floor(i/2)
             index = int(np.floor(i/2))
-            
-            if f.endswith('.jpg'):
-                self.imgs[index] = inpath2+f
-                cur_img = Image.open(self.imgs[index])
-                # Transposed to be able to index each channel easier
-                cur_img_px = torch.transpose(torch.Tensor(cur_img.getdata()), 0, 1)
-                cur_img_px = cur_img_px.view(3,368,368)
-                pixels[index] = cur_img_px
+
+            self.imgs[index] = f
+            cur_img = Image.open(self.imgs[index])
+            # Transposed to be able to index each channel easier
+            cur_img_px = torch.transpose(torch.Tensor(cur_img.getdata()), 0, 1)
+            cur_img_px = cur_img_px.view(3,368,368)
+            pixels[index] = cur_img_px
 #                 sum_pixels += pixels 
 #                 stds += pixels
-                cur_img.close()
-                
+            cur_img.close()
+
 #                 print("Image: ", self.imgs[index].decode('utf-8', "ignore"))
 #                 print("Pixels: ", list(self.pixels[index].shape))
 #                 print("Mean: ", means[index])
 #                 print("Std: ", stds[index])
 
-            else:
-                with open(inpath2+f, 'r') as fid:
-                    dat = json.load(fid)
-                self.labels[index] = torch.Tensor(dat['hand_pts'])
+        jsonFiles = []
+        jsonFiles = glob.glob(osp.join(self.paths[0], '*.json'))
+        for i, f in enumerate(jsonFiles):
+            with open(f, 'r') as fid:
+                dat = json.load(fid)
+            self.labels[index] = torch.Tensor(dat['hand_pts'])
 # #                 print("Labels: ", list(self.labels[index].shape))
 # #                 print("_____________________________")
             cutoff = i
@@ -85,7 +98,7 @@ class CustomDataset(torch.utils.data.Dataset):
     
         print("-----Synth 2 Loaded------")
         
-        
+        """
         inpath3 = self.paths[1]
         cutoff = int((cutoff+1)/2)
         for i,f in enumerate(sorted(os.listdir(inpath3))):
@@ -115,7 +128,7 @@ class CustomDataset(torch.utils.data.Dataset):
 
 
         print("-----Synth 3 Loaded------")
-    
+    """
         # The total mean of all images per channel
         self.mean_channels = torch.mean(pixels, dim=0)
         self.std_channels = torch.std(pixels, dim=0)
@@ -126,11 +139,9 @@ class CustomDataset(torch.utils.data.Dataset):
                 
     def __getitem__(self, index):
         # 1. Read one data from file (e.g. using numpy.fromfile, PIL.Image.open).
-        f = open(self.imgs[index], 'rb')
-        img = Image.open(f)
-        # 2. Preprocess the data (e.g. torchvision.Transform).
-        rgb_flat = torch.transpose(torch.Tensor(img.getdata()), 0, 1)
-        rgb_image = rgb_flat.view(3,368,368)
+        pil2tensor = transforms.ToTensor()
+        pil_image = Image.open(self.imgs[index])
+        rgb_image = pil2tensor(pil_image)
         img_norm = TF.normalize(rgb_image, mean=self.mean_channels, std=self.std_channels)
 #         img.close()
         # 3. Return a data pair (e.g. image and label).
