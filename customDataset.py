@@ -40,14 +40,14 @@ class CustomDataset(torch.utils.data.Dataset):
         #self.paths = ['hand_labels_synth/synth2/', 'hand_labels_synth/synth3/']
         self.paths = ['test_batch_synth2/', 'test_batch_synth3/']
         # Initialize a list of file names. 
-        self.imgs = np.chararray(5591, itemsize=37)
+        self.imgs = np.chararray(10, itemsize=37)
         
         # Initialize images RGB pixels to calculate mean/std
         # 5591 images (TODO: Count how many jpg's there are to avoid
         #                    hard-coded values)
         # 368*368 = 135424 pixels
         # 3 channels for RGB
-        pixels = torch.zeros(5591,3,368,368)
+        pixels = torch.zeros(10,3,368,368)
 
         # Initialize images' RGB means
 #         sum_pixels = torch.zeros(3,368,368)
@@ -56,7 +56,7 @@ class CustomDataset(torch.utils.data.Dataset):
 #         stds = torch.zeros(3,368,368)
         
         # Initialize images' labels
-        self.labels = torch.zeros(5591,21,3)
+        self.labels = torch.zeros(10,21,3)
                            
             
         inpath2 = self.paths[0]   
@@ -68,7 +68,7 @@ class CustomDataset(torch.utils.data.Dataset):
         for i,f in enumerate(imgFiles):
             # Since every iteration can be a .jpg or a .json
             # index to add to is floor(i/2)
-            index = int(np.floor(i/2))
+            index = i #int(np.floor(i/2))
 
             self.imgs[index] = f
             cur_img = Image.open(self.imgs[index])
@@ -90,6 +90,7 @@ class CustomDataset(torch.utils.data.Dataset):
         for i, f in enumerate(jsonFiles):
             with open(f, 'r') as fid:
                 dat = json.load(fid)
+            index = i
             self.labels[index] = torch.Tensor(dat['hand_pts'])
 # #                 print("Labels: ", list(self.labels[index].shape))
 # #                 print("_____________________________")
