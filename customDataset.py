@@ -37,7 +37,7 @@ class CustomDataset(torch.utils.data.Dataset):
     def __init__(self):
         # TODO
         # Initialize file paths 
-        #self.paths = ['hand_labels_synth/synth2/', 'hand_labels_synth/synth3/']
+#         self.paths = ['hand_labels_synth/synth2/', 'hand_labels_synth/synth3/']
         self.paths = ['test_batch_synth2/', 'test_batch_synth3/']
         # Initialize a list of file names. 
         self.imgs = np.chararray(10, itemsize=37)
@@ -58,8 +58,7 @@ class CustomDataset(torch.utils.data.Dataset):
         # Initialize images' labels
         self.labels = torch.zeros(10,21,3)
                            
-            
-        inpath2 = self.paths[0]   
+  
         # Used to pick up where synth2 left off before all
         # 5591 images
         cutoff = 0
@@ -79,6 +78,7 @@ class CustomDataset(torch.utils.data.Dataset):
 #                 sum_pixels += pixels 
 #                 stds += pixels
             cur_img.close()
+            cutoff = i
 
 #                 print("Image: ", self.imgs[index].decode('utf-8', "ignore"))
 #                 print("Pixels: ", list(self.pixels[index].shape))
@@ -94,7 +94,7 @@ class CustomDataset(torch.utils.data.Dataset):
             self.labels[index] = torch.Tensor(dat['hand_pts'])
 # #                 print("Labels: ", list(self.labels[index].shape))
 # #                 print("_____________________________")
-            cutoff = i
+            
     
     
         print("-----Synth 2 Loaded------")
@@ -131,6 +131,7 @@ class CustomDataset(torch.utils.data.Dataset):
         print("-----Synth 3 Loaded------")
     """
         # The total mean of all images per channel
+        print(pixels)
         self.mean_channels = torch.mean(pixels, dim=0)
         self.std_channels = torch.std(pixels, dim=0)
         print("Mean Shape: ", self.mean_channels.shape)
@@ -143,6 +144,7 @@ class CustomDataset(torch.utils.data.Dataset):
         pil2tensor = transforms.ToTensor()
         pil_image = Image.open(self.imgs[index])
         rgb_image = pil2tensor(pil_image)
+        print(rgb_image.shape)
         img_norm = TF.normalize(rgb_image, mean=self.mean_channels, std=self.std_channels)
 #         img.close()
         # 3. Return a data pair (e.g. image and label).
