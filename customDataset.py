@@ -65,13 +65,14 @@ class CustomDataset(torch.utils.data.Dataset):
         cutoff = 0
         imgFiles = []
         imgFiles = glob.glob(osp.join(self.paths[0], '*.jpg'))
+        print("1")
         for i,f in enumerate(imgFiles):
-            # Since every iteration can be a .jpg or a .json
-            # index to add to is floor(i/2)
-            index = i #int(np.floor(i/2))
+            index = i
 
             self.imgs[index] = f
-            cur_img = Image.open(self.imgs[index])
+            print(f)
+            cur_img = Image.open(self.imgs[index].encode('utf-8'))
+            print("2")
             # Transposed to be able to index each channel easier
             cur_img_px = torch.transpose(torch.Tensor(cur_img.getdata()), 0, 1)
             cur_img_px = cur_img_px.view(3,368,368)
@@ -130,6 +131,7 @@ class CustomDataset(torch.utils.data.Dataset):
 
         print("-----Synth 3 Loaded------")
     """
+        print(pixels)
         # The total mean of all images per channel
         self.mean_channels = torch.mean(pixels, dim=0)
         self.std_channels = torch.std(pixels, dim=0)
