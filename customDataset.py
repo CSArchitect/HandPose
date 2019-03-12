@@ -21,6 +21,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 import glob
+from pprint import pprint
 
 # ================================================================== #
 #                  Input pipeline for custom dataset                 #
@@ -35,118 +36,104 @@ lbl_size = 21, 3
 class CustomDataset(torch.utils.data.Dataset):
     
     def __init__(self):
-        # TODO
         # Initialize file paths 
-        #self.paths = ['hand_labels_synth/synth2/', 'hand_labels_synth/synth3/']
-        self.paths = ['hand_labels_synth\synth2/', 'test_batch_synth3/']
-        # Initialize a list of file names. 
-        self.imgs = np.chararray(3243, itemsize=37)
-        
-        # Initialize images RGB pixels to calculate mean/std
-        # 5591 images (TODO: Count how many jpg's there are to avoid
-        #                    hard-coded values)
-        # 368*368 = 135424 pixels
-        # 3 channels for RGB
-        pixels = torch.zeros(3243,3,368,368)
+#         self.paths = ['hand_labels_synth/synth2/',
+#                       'hand_labels_synth/synth3/']
+        self.paths = ['hand_labels_synth/test2/',
+                      'hand_labels_synth/test3/']
 
-        # Initialize images' RGB means
-#         sum_pixels = torch.zeros(3,368,368)
+        # Initialize first folder
+        imgFiles_1 = []
+        imgFiles_1 = glob.glob(osp.join(self.paths[0], '*.jpg'))
+        numFiles_1 = len(imgFiles_1)
         
-        # Initialize images' RGB std
-#         stds = torch.zeros(3,368,368)
+        jsonFiles_1 = []
+        jsonFiles_1 = glob.glob(osp.join(self.paths[0], '*.json'))
+        
+        # Initialize second folder
+        imgFiles_2 = []
+        imgFiles_2 = glob.glob(osp.join(self.paths[1], '*.jpg'))
+        numFiles_2 = len(imgFiles_2)
+        
+        jsonFiles_2 = []
+        jsonFiles_2 = glob.glob(osp.join(self.paths[1], '*.json'))
+        
+        # Get total number of 
+        numFiles = numFiles_1 + numFiles_2
+
+        # Initialize a list of file names. 
+        self.imgs = np.chararray(numFiles, itemsize=37)
         
         # Initialize images' labels
-        self.labels = torch.zeros(3243,21,3)
-                           
+        self.labels = torch.zeros(numFiles,21,3)
+        
+        # Initialize images RGB pixels to calculate mean/std
+        pixels = torch.zeros(numFiles,3,368,368)  
+
+        pil2tensor = transforms.ToTensor()
+        
+        
+        #################################################################
+        
+        for i,f in enumerate(imgFiles_1):
+            self.imgs[i] = f
+
+            pil_image = Image.open(f)
+            rgb_image = pil2tensor(pil_image)*255
+
+            pixels[i] = rgb_image
+            pil_image.close()
             
-        inpath2 = self.paths[0]   
-        # Used to pick up where synth2 left off before all
-        # 5591 images
-        cutoff = 0
-        imgFiles = []
-        imgFiles = glob.glob(osp.join(self.paths[0], '*.jpg'))
-        print("1")
-        for i,f in enumerate(imgFiles):
-            index = i
-
-            self.imgs[index] = f
-            print(f)
-            cur_img = Image.open(self.imgs[index].encode('utf-8'))
-            print("2")
-            # Transposed to be able to index each channel easier
-            cur_img_px = torch.transpose(torch.Tensor(cur_img.getdata()), 0, 1)
-            cur_img_px = cur_img_px.view(3,368,368)
-            pixels[index] = cur_img_px
-#                 sum_pixels += pixels 
-#                 stds += pixels
-            cur_img.close()
-
-#                 print("Image: ", self.imgs[index].decode('utf-8', "ignore"))
-#                 print("Pixels: ", list(self.pixels[index].shape))
-#                 print("Mean: ", means[index])
-#                 print("Std: ", stds[index])
-
-        jsonFiles = []
-        jsonFiles = glob.glob(osp.join(self.paths[0], '*.json'))
-        for i, f in enumerate(jsonFiles):
+        for i, f in enumerate(jsonFiles_1):
             with open(f, 'r') as fid:
                 dat = json.load(fid)
-            index = i
-            self.labels[index] = torch.Tensor(dat['hand_pts'])
-# #                 print("Labels: ", list(self.labels[index].shape))
-# #                 print("_____________________________")
-            cutoff = i
-    
-    
+            self.labels[i] = torch.Tensor(dat['hand_pts'])
+            
         print("-----Synth 2 Loaded------")
         
-        """
-        inpath3 = self.paths[1]
-        cutoff = int((cutoff+1)/2)
-        for i,f in enumerate(sorted(os.listdir(inpath3))):
-            index = int(np.floor(i/2))
+        #################################################################
+
+        for i,f in enumerate(imgFiles_2):
+            self.imgs[i+numFiles_1] = f
+
+            pil_image = Image.open(f)
+            rgb_image = pil2tensor(pil_image)*255
+
+            pixels[i] = rgb_image
+            pil_image.close()
             
-            if f.endswith('.jpg'):
-                self.imgs[index] = inpath3+f
-                cur_img = Image.open(self.imgs[index])
-                cur_img_px = torch.transpose(torch.Tensor(cur_img.getdata()), 0, 1)
-                cur_img_px = cur_img_px.view(3,368,368)
-                pixels[index] = cur_img_px
-#                 sum_pixels += pixels 
-#                 stds += pixels
-                cur_img.close()
-                
-#                 print("Image: ", self.imgs[index].decode('utf-8', "ignore"))
-#                 print("Pixels: ", list(self.pixels[index].shape))
-#                 print("Mean: ", means[index])
-#                 print("Std: ", stds[index])
-
-            else:
-                with open(inpath3+f, 'r') as fid:
-                    dat = json.load(fid)
-                self.labels[index] = torch.Tensor(dat['hand_pts'])
-# #                 print("Labels: ", list(self.labels[index].shape))
-# #                 print("_____________________________")
-
-
+        for i, f in enumerate(jsonFiles_2):
+            with open(f, 'r') as fid:
+                dat = json.load(fid)
+            self.labels[i+numFiles_1] = torch.Tensor(dat['hand_pts'])
+    
         print("-----Synth 3 Loaded------")
-    """
-        print(pixels)
+        
+        #################################################################
+
         # The total mean of all images per channel
         self.mean_channels = torch.mean(pixels, dim=0)
         self.std_channels = torch.std(pixels, dim=0)
-        print("Mean Shape: ", self.mean_channels.shape)
-        print("Mean: ", self.mean_channels)
-        print("Std Shape: ", self.std_channels.shape)
-        print("Std: ", self.std_channels)
+#         print("Mean Shape: ", self.mean_channels.shape)
+#         print("Mean: ", self.mean_channels)
+#         print("Std Shape: ", self.std_channels.shape)
+#         print("Std: ", self.std_channels)
+        pprint(self.mean_channels[0])
+        print("______________________________")
+        pprint(self.mean_channels[1])
+        print("______________________________")
+        pprint(self.mean_channels[2])
+        print("______________________________")
                 
     def __getitem__(self, index):
         # 1. Read one data from file (e.g. using numpy.fromfile, PIL.Image.open).
         pil2tensor = transforms.ToTensor()
         pil_image = Image.open(self.imgs[index])
-        rgb_image = pil2tensor(pil_image)
-        img_norm = TF.normalize(rgb_image, mean=self.mean_channels, std=self.std_channels)
-#         img.close()
+        rgb_image = pil2tensor(pil_image)*255
+        
+        img_norm = TF.normalize(rgb_image, 
+                                mean=self.mean_channels, std=self.std_channels)
+        pil_img.close()
         # 3. Return a data pair (e.g. image and label).
         return (img_norm, self.labels[index])
 
