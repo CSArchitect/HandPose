@@ -28,7 +28,7 @@ from pprint import pprint
 # ================================================================== #
 
 img_size = 368, 368
-lbl_size = 21, 3
+lbl_size = 21, 4
 #path = 'test_batch_synth2/'
     
     
@@ -65,7 +65,7 @@ class CustomDataset(torch.utils.data.Dataset):
         self.imgs = np.chararray(numFiles, itemsize=37)
         
         # Initialize images' labels
-        self.labels = torch.zeros(numFiles,21,3)
+        self.labels = torch.zeros(numFiles,21,4)
         
         # Initialize images RGB pixels to calculate mean/std
         pixels = torch.zeros(numFiles,3,368,368)  
@@ -87,7 +87,7 @@ class CustomDataset(torch.utils.data.Dataset):
         for i, f in enumerate(jsonFiles_1):
             with open(f, 'r') as fid:
                 dat = json.load(fid)
-            self.labels[i] = torch.Tensor(dat['hand_pts'])
+            self.labels[i] = torch.Tensor(dat['label'])
             
         print("-----Synth 2 Loaded------")
         
@@ -105,7 +105,7 @@ class CustomDataset(torch.utils.data.Dataset):
         for i, f in enumerate(jsonFiles_2):
             with open(f, 'r') as fid:
                 dat = json.load(fid)
-            self.labels[i+numFiles_1] = torch.Tensor(dat['hand_pts'])
+            self.labels[i+numFiles_1] = torch.Tensor(dat['label'])
     
         print("-----Synth 3 Loaded------")
         
