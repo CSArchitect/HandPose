@@ -65,7 +65,7 @@ class CustomDataset(torch.utils.data.Dataset):
         self.imgs = np.chararray(numFiles, itemsize=37)
         
         # Initialize images' labels
-        self.labels = torch.zeros(numFiles)
+        self.labels = torch.zeros(numFiles, dtype=torch.int32)
         
         # Initialize images RGB pixels to calculate mean/std
         pixels = torch.zeros(numFiles,3,368,368)  
@@ -87,7 +87,7 @@ class CustomDataset(torch.utils.data.Dataset):
         for i, f in enumerate(jsonFiles_1):
             with open(f, 'r') as fid:
                 dat = json.load(fid)
-            self.labels[i] = torch.Tensor(dat['label'])
+            self.labels[i] = dat['label']
             print(self.labels[i])
             
         print("-----Synth 2 Loaded------")
@@ -106,7 +106,7 @@ class CustomDataset(torch.utils.data.Dataset):
         for i, f in enumerate(jsonFiles_2):
             with open(f, 'r') as fid:
                 dat = json.load(fid)
-            self.labels[i+numFiles_1] = torch.Tensor(dat['label'])
+            self.labels[i+numFiles_1] = dat['label']
             print(self.labels[i+numFiles_1])
     
         print("-----Synth 3 Loaded------")
@@ -120,12 +120,12 @@ class CustomDataset(torch.utils.data.Dataset):
 #         print("Mean: ", self.mean_channels)
 #         print("Std Shape: ", self.std_channels.shape)
 #         print("Std: ", self.std_channels)
-        pprint(self.mean_channels[0])
-        print("______________________________")
-        pprint(self.mean_channels[1])
-        print("______________________________")
-        pprint(self.mean_channels[2])
-        print("______________________________")
+#         pprint(self.mean_channels[0])
+#         print("______________________________")
+#         pprint(self.mean_channels[1])
+#         print("______________________________")
+#         pprint(self.mean_channels[2])
+#         print("______________________________")
                 
     def __getitem__(self, index):
         # 1. Read one data from file (e.g. using numpy.fromfile, PIL.Image.open).
@@ -135,7 +135,7 @@ class CustomDataset(torch.utils.data.Dataset):
         
         img_norm = TF.normalize(rgb_image, 
                                 mean=self.mean_channels, std=self.std_channels)
-        pil_img.close()
+        pil_image.close()
         # 3. Return a data pair (e.g. image and label).
         return (img_norm, self.labels[index])
 
