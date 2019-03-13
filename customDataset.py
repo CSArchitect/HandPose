@@ -65,7 +65,7 @@ class CustomDataset(torch.utils.data.Dataset):
         self.imgs = np.chararray(numFiles, itemsize=37)
         
         # Initialize images' labels
-        self.labels = torch.zeros(numFiles,21,4)
+        self.labels = torch.zeros(numFiles)
         
         # Initialize images RGB pixels to calculate mean/std
         pixels = torch.zeros(numFiles,3,368,368)  
@@ -88,6 +88,7 @@ class CustomDataset(torch.utils.data.Dataset):
             with open(f, 'r') as fid:
                 dat = json.load(fid)
             self.labels[i] = torch.Tensor(dat['label'])
+            print(self.labels[i])
             
         print("-----Synth 2 Loaded------")
         
@@ -106,6 +107,7 @@ class CustomDataset(torch.utils.data.Dataset):
             with open(f, 'r') as fid:
                 dat = json.load(fid)
             self.labels[i+numFiles_1] = torch.Tensor(dat['label'])
+            print(self.labels[i+numFiles_1])
     
         print("-----Synth 3 Loaded------")
         
