@@ -58,17 +58,20 @@ class CustomDataset(torch.utils.data.Dataset):
         jsonFiles_2 = []
         jsonFiles_2 = glob.glob(osp.join(self.paths[1], '*.json'))
         
-        # Get total number of 
+        # Get total number of images
         numFiles = numFiles_1 + numFiles_2
 
         # Initialize a list of file names. 
         self.imgs = np.chararray(numFiles, itemsize=37)
         
         # Initialize images' labels
-        self.labels = torch.zeros(numFiles, dtype=torch.int32)
+        self.labels = torch.zeros(numFiles, dtype=torch.long)
         
         # Initialize images RGB pixels to calculate mean/std
-        pixels = torch.zeros(numFiles,3,368,368)  
+        # Working with resizing to 128 (https://arxiv.org/pdf/1606.02228v2.pdf).
+        # Haven't read but http://yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf
+        # was cited to show how to tune a CNN
+        pixels = torch.zeros(numFiles,3,128,128)  
 
         pil2tensor = transforms.ToTensor()
         
@@ -79,7 +82,8 @@ class CustomDataset(torch.utils.data.Dataset):
             self.imgs[i] = f
 
             pil_image = Image.open(f)
-            rgb_image = pil2tensor(pil_image)*255
+            resized_image = pil_image.resize((128,128))
+            rgb_image = pil2tensor(resized_image)*255
 
             pixels[i] = rgb_image
             pil_image.close()
@@ -88,7 +92,6 @@ class CustomDataset(torch.utils.data.Dataset):
             with open(f, 'r') as fid:
                 dat = json.load(fid)
             self.labels[i] = dat['label']
-            print(self.labels[i])
             
         print("-----Synth 2 Loaded------")
         
@@ -98,7 +101,8 @@ class CustomDataset(torch.utils.data.Dataset):
             self.imgs[i+numFiles_1] = f
 
             pil_image = Image.open(f)
-            rgb_image = pil2tensor(pil_image)*255
+            resized_image = pil_image.resize((128,128))
+            rgb_image = pil2tensor(resized_image)*255
 
             pixels[i] = rgb_image
             pil_image.close()
@@ -107,7 +111,6 @@ class CustomDataset(torch.utils.data.Dataset):
             with open(f, 'r') as fid:
                 dat = json.load(fid)
             self.labels[i+numFiles_1] = dat['label']
-            print(self.labels[i+numFiles_1])
     
         print("-----Synth 3 Loaded------")
         
@@ -131,7 +134,8 @@ class CustomDataset(torch.utils.data.Dataset):
         # 1. Read one data from file (e.g. using numpy.fromfile, PIL.Image.open).
         pil2tensor = transforms.ToTensor()
         pil_image = Image.open(self.imgs[index])
-        rgb_image = pil2tensor(pil_image)*255
+        resized_image = pil_image.resize((128,128))
+        rgb_image = pil2tensor(resized_image)*255
         
         img_norm = TF.normalize(rgb_image, 
                                 mean=self.mean_channels, std=self.std_channels)
